@@ -66,7 +66,7 @@ public class TestLogic implements ProcessConstants
         for(final Task task : tasks)
         {
             // ///////////////////////////////////////////// Single threaded //////////////////////////////////////////////////////////////
-//            this.taskService.complete(task.getId());
+//            processEngine.getTaskService().complete(task.getId());
 //            latch.countDown();
 
             // ///////////////////////////////////////////// Multi threaded //////////////////////////////////////////////////////////////
