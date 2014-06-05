@@ -6,19 +6,19 @@ import java.util.List;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.delegate.TaskListener;
 
-public class TaskEndTaskListener implements TaskListener
+public class TaskEndTaskListener implements TaskListener, ProcessConstants
 {
     @SuppressWarnings("unchecked")
     @Override
     public void notify(final DelegateTask task)
     {
-        final List<String> stuff = (List<String>) task.getVariableLocal("stuff");
+        final List<String> stuff = (List<String>) task.getVariableLocal(VAR_STUFF_LOCAL);
         System.out.println("TaskListener: " + stuff);
 
         // Merge into process pipeline
         synchronized(TaskEndTaskListener.class) // TODO: Sync scope too big - should sync over process instance - but how?!?
         {
-            List<String> stuffGlobal = (List<String>) task.getVariable("stuffGlobal");
+            List<String> stuffGlobal = (List<String>) task.getVariable(VAR_STUFF_GLOBAL);
 
             if(stuffGlobal == null)
             {
@@ -33,7 +33,7 @@ public class TaskEndTaskListener implements TaskListener
                 }
             }
 
-            task.setVariable("stuffGlobal", stuffGlobal);
+            task.setVariable(VAR_STUFF_GLOBAL, stuffGlobal);
         }
     }
 }

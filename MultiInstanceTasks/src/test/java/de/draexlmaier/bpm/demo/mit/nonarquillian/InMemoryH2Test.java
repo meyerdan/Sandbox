@@ -1,5 +1,7 @@
 package de.draexlmaier.bpm.demo.mit.nonarquillian;
 
+import static java.lang.String.valueOf;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +22,7 @@ import de.draexlmaier.bpm.demo.mit.ProcessConstants;
  */
 public class InMemoryH2Test extends ProcessEngineTestCase implements ProcessConstants
 {
-    private static final Ring<String> values = new ArrayRing<String>();
+    private static final Ring<String> values = new ArrayRing<>();
 
     private static final int TASK_COUNT = 1000;
 
@@ -101,7 +103,7 @@ public class InMemoryH2Test extends ProcessEngineTestCase implements ProcessCons
 
         for(int i = 1; i <= TASK_COUNT; ++i)
         {
-            result.add(String.valueOf(i));
+            result.add(valueOf(i));
         }
 
         return result;
