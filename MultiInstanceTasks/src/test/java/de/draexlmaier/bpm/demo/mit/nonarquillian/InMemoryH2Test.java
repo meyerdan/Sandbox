@@ -24,7 +24,7 @@ public class InMemoryH2Test extends ProcessEngineTestCase implements ProcessCons
 {
     private static final Ring<String> values = new ArrayRing<>();
 
-    private static final int TASK_COUNT = 1000;
+    private static final int TASK_COUNT = 100;
 
     static
     {
@@ -64,6 +64,11 @@ public class InMemoryH2Test extends ProcessEngineTestCase implements ProcessCons
         int theadCounter = 0;
         for(final Task task : tasks)
         {
+            // ///////////////////////////////////////////// Single threaded //////////////////////////////////////////////////////////////
+//            this.taskService.complete(task.getId());
+//            latch.countDown();
+
+            // ///////////////////////////////////////////// Multi threaded //////////////////////////////////////////////////////////////
             new Thread("TaskCompleter" + (++theadCounter))
             {
                 @Override
