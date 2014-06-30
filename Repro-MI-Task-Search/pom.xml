@@ -54,12 +54,6 @@
 
 		<!-- Add your own dependencies here, if in compile scope, they are added 
 			to the war -->
-
-		<dependency>
-			<groupId>net.sf.javagimmicks</groupId>
-			<artifactId>gimmicks-collections</artifactId>
-			<version>0.97</version>
-		</dependency>
 	</dependencies>
 
 	<repositories>
