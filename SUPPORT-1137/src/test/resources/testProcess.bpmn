@@ -4,9 +4,9 @@
     <bpmn2:startEvent id="StartEvent_1">
       <bpmn2:outgoing>SequenceFlow_1</bpmn2:outgoing>
     </bpmn2:startEvent>
-    <bpmn2:sendTask id="UserTask_1" camunda:async="true" camunda:class="org.camunda.bpm.unittest.FailingDelegate" name="Failing Send Task">
+    <bpmn2:sendTask id="UserTask_1" camunda:async="true" camunda:class="org.camunda.bpm.unittest.SendMessageDelegate" name="Failing Send Task">
       <bpmn2:extensionElements>
-        <fox:failedJobRetryTimeCycle>R3/PT5M</fox:failedJobRetryTimeCycle>
+        <fox:failedJobRetryTimeCycle>R0/PT5M</fox:failedJobRetryTimeCycle>
       </bpmn2:extensionElements>
       <bpmn2:incoming>SequenceFlow_1</bpmn2:incoming>
       <bpmn2:outgoing>SequenceFlow_2</bpmn2:outgoing>

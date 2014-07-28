@@ -11,14 +11,9 @@ package org.camunda.bpm.unittest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.camunda.bpm.engine.ManagementService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.runtime.Job;
-import org.camunda.bpm.engine.runtime.JobQuery;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.test.Deployment;
 import org.camunda.bpm.engine.test.ProcessEngineRule;
@@ -28,9 +23,6 @@ import org.junit.Test;
 
 public class SimpleTestCase
 {
-
-    private final static Logger LOGGER = Logger.getLogger(SimpleTestCase.class.getName());
-
     @Rule
     public ProcessEngineRule rule = new ProcessEngineRule();
 
@@ -45,64 +37,47 @@ public class SimpleTestCase
     }
 
     @Test
-    @Deployment(resources = { "testProcess.bpmn" })
-    public void shouldExecuteProcess()
+    @Deployment(resources = { "testProcess.bpmn", "testCalledProcess.bpmn" })
+    public void testCorrectRetries()
     {
-
         final ProcessInstance pi = this.runtimeService.startProcessInstanceByKey("testProcess");
 
-        executeJobs(pi.getId());
+        final Job job =
+                this.managementService.createJobQuery().processInstanceId(pi.getProcessInstanceId()).withRetriesLeft()
+                        .active().singleResult();
 
-        final Job job = this.managementService.createJobQuery().singleResult();
         assertNotNull(job);
-        assertEquals(0, job.getRetries());
-
+        assertEquals(0, job.getRetries()); // In the process, we have written "R0/PT5M" - as proposed within SUPPORT-998 to have no retries
     }
 
-    public void executeJobs(final String processInstanceId)
+    @Test
+    @Deployment(resources = { "testProcess.bpmn", "testCalledProcess.bpmn" })
+    public void testCorrectRetryCountDown()
     {
-        while(true)
+        final ProcessInstance pi = this.runtimeService.startProcessInstanceByKey("testProcess");
+
+        Job job =
+                this.managementService.createJobQuery().processInstanceId(pi.getProcessInstanceId()).withRetriesLeft()
+                        .active().singleResult();
+
+        assertNotNull(job);
+        assertEquals(3, job.getRetries()); // See testcase above - this is already not OK
+
+        try
         {
-            // try to find all jobs for this process that have retries left
-            final JobQuery jobQuery = this.managementService.createJobQuery().withRetriesLeft().active();
-            if(processInstanceId != null)
-            {
-                jobQuery.processInstanceId(processInstanceId);
-            }
-            final List<Job> jobs = jobQuery.list();
-
-            // if not jobs found with retries left we are finished
-            if((jobs == null) || jobs.isEmpty())
-            {
-                break;
-            }
-
-            // execute each job
-            for(final Job job : jobs)
-            {
-                final String jobId = job.getId();
-                try
-                {
-                    this.managementService.executeJob(jobId);
-                }
-                catch(final Exception ex)
-                {
-                    LOGGER.log(Level.WARNING, "Exception thrown while manually executing job " + jobId, ex);
-                }
-            }
+            this.managementService.executeJob(job.getId());
+        }
+        catch(final RuntimeException ex)
+        {
+            assertEquals("Expected Exception!", ex.getMessage());
         }
 
-        // find and execute subprocesses of the process
-        final List<ProcessInstance> subprocesses =
-                this.runtimeService.createProcessInstanceQuery().superProcessInstanceId(processInstanceId).list();
-        if((subprocesses != null))
-        {
-            for(final ProcessInstance sub : subprocesses)
-            {
-                executeJobs(sub.getProcessInstanceId());
-            }
-        }
+        job =
+                this.managementService.createJobQuery().processInstanceId(pi.getProcessInstanceId()).withRetriesLeft()
+                        .active().singleResult();
 
+        // After failing, the retries left count should have been reduced by one (it is an async task)
+        assertNotNull(job);
+        assertEquals(2, job.getRetries());
     }
-
 }
