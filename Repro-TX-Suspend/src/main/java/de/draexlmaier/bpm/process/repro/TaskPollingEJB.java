@@ -27,9 +27,10 @@ public class TaskPollingEJB implements TaskPollingEJBLocal
     {
         for(final Task task : this.taskService.createTaskQuery().list())
         {
+            boolean completeTask = false;
             try
             {
-                handleTaskInternal(task);
+                completeTask = handleTaskInternal(task);
             }
             catch(final Exception ex)
             {
@@ -37,15 +38,19 @@ public class TaskPollingEJB implements TaskPollingEJBLocal
                 continue;
             }
 
-            this.taskService.complete(task.getId());
+            if(completeTask)
+            {
+                this.taskService.complete(task.getId());
+            }
         }
     }
 
-    protected void handleTask(final Task task)
+    protected boolean handleTask(final Task task)
     {
+        return true;
     }
 
-    private void handleTaskInternal(final Task task) throws Exception
+    private boolean handleTaskInternal(final Task task) throws Exception
     {
         // Suspend current TX and start a new one to process this one task
         final Transaction oldTx = this.transactionManager.suspend();
@@ -54,10 +59,12 @@ public class TaskPollingEJB implements TaskPollingEJBLocal
         // Associate task (needed in internal code later)
         this.businessProcess.setTask(task);
 
+        boolean result = false;
+
         try
         {
             // Do the real work
-            handleTask(task);
+            result = handleTask(task);
 
             // Flush data
             this.businessProcess.flushVariableCache();
@@ -82,6 +89,8 @@ public class TaskPollingEJB implements TaskPollingEJBLocal
                 this.transactionManager.resume(oldTx);
             }
         }
+
+        return result;
     }
 
     private void logIncident(final Task task, final Exception ex)
